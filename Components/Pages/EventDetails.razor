@@ -1,0 +1,44 @@
+@page "/events/{Id:int}"
+@using CourseraEventApp.Data
+@using CourseraEventApp.Models
+@using CourseraEventApp.Services
+@inject AttendanceTracker AttendanceTracker
+
+<PageTitle>@(_event?.Name ?? "Event not found") | EventEase</PageTitle>
+
+<section class="event-detail-page">
+    @if (_event is null)
+    {
+        <p class="eyebrow">Not on the calendar</p>
+        <h1>We couldn’t find that event.</h1>
+        <p class="event-detail__description">This event may have been removed or its link may be incorrect.</p>
+        <NavLink class="button-link" href="/events">Explore all events</NavLink>
+    }
+    else
+    {
+        <NavLink class="back-link" href="/events">← All events</NavLink>
+        <article class="event-detail">
+            <span class="event-card__category">@_event.Category</span>
+            <h1>@_event.Name</h1>
+            <div class="event-detail__facts">
+                <p><strong>Date</strong><br />@_event.Date.ToString("MMMM d, yyyy")</p>
+                <p><strong>Location</strong><br />@_event.Location</p>
+                <p><strong>Attendance</strong><br />@AttendanceTracker.GetAttendanceCount(_event.Id) registered</p>
+            </div>
+            <p class="event-detail__description">@_event.Description</p>
+            <NavLink class="button-link" href="@($"/events/{_event.Id}/register")" Match="NavLinkMatch.All">Register for this event</NavLink>
+        </article>
+    }
+</section>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Event? _event;
+
+    protected override void OnParametersSet()
+    {
+        _event = EventCatalog.FindById(Id);
+    }
+}

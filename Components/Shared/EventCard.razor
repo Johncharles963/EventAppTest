@@ -1,0 +1,56 @@
+@using CourseraEventApp.Models
+@using System.ComponentModel.DataAnnotations
+
+@if (_validationErrors.Count > 0)
+{
+    <div class="event-card__validation" role="alert">
+        <strong>Unable to display this event.</strong>
+        <ul>
+            @foreach (var error in _validationErrors)
+            {
+                <li>@error</li>
+            }
+        </ul>
+    </div>
+}
+else if (Event is not null)
+{
+    <article class="event-card">
+        <div class="event-card__accent" aria-hidden="true"></div>
+        <div class="event-card__content">
+            <span class="event-card__category">@Event.Category</span>
+            <h2>@Event.Name</h2>
+            <p class="event-card__date">@Event.Date.ToString("MMMM d, yyyy")</p>
+            <p class="event-card__location">@Event.Location</p>
+            <NavLink class="event-card__link" href="@($"/events/{Event.Id}")">
+                View event <span aria-hidden="true">→</span>
+            </NavLink>
+        </div>
+    </article>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public Event? Event { get; set; }
+
+    private readonly List<string> _validationErrors = [];
+
+    protected override void OnParametersSet()
+    {
+        _validationErrors.Clear();
+
+        if (Event is null)
+        {
+            _validationErrors.Add("Event data was not provided.");
+            return;
+        }
+
+        var results = new List<ValidationResult>();
+        if (!Validator.TryValidateObject(Event, new ValidationContext(Event), results, validateAllProperties: true))
+        {
+            _validationErrors.AddRange(results
+                .Select(result => result.ErrorMessage)
+                .OfType<string>());
+        }
+    }
+}

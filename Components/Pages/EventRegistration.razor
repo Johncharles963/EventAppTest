@@ -1,0 +1,136 @@
+@page "/events/{Id:int}/register"
+@using System.ComponentModel.DataAnnotations
+@using CourseraEventApp.Data
+@using CourseraEventApp.Models
+@using CourseraEventApp.Services
+@inject AttendeeSessionState SessionState
+@inject AttendanceTracker AttendanceTracker
+
+<PageTitle>Register | EventEase</PageTitle>
+
+<section class="event-detail-page">
+    @if (_event is null)
+    {
+        <p class="eyebrow">Not on the calendar</p>
+        <h1>We couldn’t find that event.</h1>
+        <p class="event-detail__description">You can browse the event list and choose an available event to register for.</p>
+        <NavLink class="button-link" href="/events">Explore all events</NavLink>
+    }
+    else
+    {
+        <NavLink class="back-link" href="@($"/events/{_event.Id}")">← Event details</NavLink>
+        <article class="registration-panel">
+            <p class="eyebrow">Save your seat</p>
+            <h1>Register for @_event.Name</h1>
+            <p class="registration-panel__event">@_event.Date.ToString("MMMM d, yyyy") · @_event.Location</p>
+            @{
+                var attendanceCount = AttendanceTracker.GetAttendanceCount(_event.Id);
+            }
+            <p class="attendance-count">@attendanceCount @(attendanceCount == 1 ? "person" : "people") registered</p>
+
+            @if (_alreadyRegistered)
+            {
+                <div class="registration-success" role="status">
+                    This browser session is already registered for this event.
+                    <NavLink href="/my-events">View your events</NavLink>
+                </div>
+            }
+            else if (_submitted)
+            {
+                <div class="registration-success" role="status">
+                    Thanks, @_registration.Name! Your registration for @_event.Name is confirmed.
+                </div>
+            }
+            else
+            {
+                <EditForm Model="_registration" OnValidSubmit="SubmitRegistration">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="form-validation-summary" />
+                    <label>
+                        Full name
+                        <InputText @bind-Value="_registration.Name" autocomplete="name" aria-required="true" />
+                    </label>
+                    <ValidationMessage For="@(() => _registration.Name)" />
+                    <label>
+                        Email address
+                        <InputText @bind-Value="_registration.Email" type="email" autocomplete="email" aria-required="true" />
+                    </label>
+                    <ValidationMessage For="@(() => _registration.Email)" />
+                    <button class="button-link" type="submit" disabled="@_isSubmitting">
+                        @(_isSubmitting ? "Registering..." : "Complete registration")
+                    </button>
+                </EditForm>
+            }
+        </article>
+    }
+</section>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Event? _event;
+    private RegistrationDetails _registration = new();
+    private bool _submitted;
+    private bool _alreadyRegistered;
+    private bool _isSubmitting;
+
+    protected override void OnParametersSet()
+    {
+        _event = EventCatalog.FindById(Id);
+        _alreadyRegistered = _event is not null && SessionState.HasRegisteredFor(_event.Id);
+        _submitted = false;
+
+        if (!_alreadyRegistered)
+        {
+            _registration = new RegistrationDetails
+            {
+                Name = SessionState.FullName ?? string.Empty,
+                Email = SessionState.Email ?? string.Empty
+            };
+        }
+    }
+
+    private void SubmitRegistration()
+    {
+        if (_event is null || _isSubmitting)
+        {
+            return;
+        }
+        _isSubmitting = true;
+        _isSubmitting = true;
+
+        try
+        {
+            var name = _registration.Name.Trim();
+            var email = _registration.Email.Trim();
+            if (!AttendanceTracker.TryRegister(SessionState.SessionId, _event.Id, out _))
+            {
+                _alreadyRegistered = true;
+                return;
+            }
+
+            SessionState.RememberRegistration(name, email, _event.Id);
+            _registration.Name = name;
+            _registration.Email = email;
+            _submitted = true;
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    private sealed class RegistrationDetails
+    {
+        [Required(ErrorMessage = "Enter your full name.")]
+        [StringLength(100, MinimumLength = 2, ErrorMessage = "Name must be between 2 and 100 characters.")]
+        [RegularExpression(@".*\S.*", ErrorMessage = "Enter a name containing at least one non-space character.")]
+        public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Enter your email address.")]
+        [EmailAddress(ErrorMessage = "Enter a valid email address.")]
+        [StringLength(254, ErrorMessage = "Email address must be 254 characters or fewer.")]
+        public string Email { get; set; } = string.Empty;
+    }
+}

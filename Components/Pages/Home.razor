@@ -1,0 +1,37 @@
+﻿@page "/"
+@page "/events"
+@using CourseraEventApp.Data
+@using CourseraEventApp.Components.Shared
+
+<PageTitle>Explore events | EventEase</PageTitle>
+
+<section class="events-page">
+    <div class="events-hero">
+        <p class="eyebrow">Make room for memorable</p>
+        <h1>Gather well.<br />Make it matter.</h1>
+        <p class="events-hero__description">
+            Find thoughtful events for good conversations, fresh ideas, and the people who make them special.
+        </p>
+    </div>
+
+    <section class="events-list" aria-labelledby="upcoming-events-heading">
+        <div class="events-list__heading">
+            <div>
+                <p class="eyebrow">The calendar</p>
+                <h2 id="upcoming-events-heading">Upcoming events</h2>
+            </div>
+            <span>@Events.Count events</span>
+        </div>
+
+        <div class="event-grid">
+            @foreach (var eventItem in Events)
+            {
+                <EventCard @key="eventItem.Id" Event="eventItem" />
+            }
+        </div>
+    </section>
+</section>
+
+@code {
+    private static IReadOnlyList<CourseraEventApp.Models.Event> Events => EventCatalog.All;
+}

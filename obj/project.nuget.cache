@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "JsxlqzLYkRk=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\johnc_sbsl6ew\\Programming Projects\\CSharp\\CourseraEventApp\\CourseraEventApp.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\johnc_sbsl6ew\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.12\\microsoft.aspnetcore.app.internal.assets.10.0.12.nupkg.sha512"
+  ],
+  "logs": []
+}
